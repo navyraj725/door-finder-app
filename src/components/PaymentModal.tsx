@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Smartphone } from 'lucide-react';
-import { supabase, type PlanType } from '@/lib/supabase';
+import { supabase, normalizeWhatsApp, type PlanType } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 
 interface PaymentModalProps {
@@ -60,6 +60,15 @@ export default function PaymentModal({ open, amount, planType, propertyId, durat
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Fill contact fields once the profile arrives, without overtyping edits
+  useEffect(() => {
+    if (profile?.whatsapp) {
+      setMmPhone((v) => v || profile.whatsapp);
+      setBankPhone((v) => v || profile.whatsapp);
+    }
+    if (profile?.full_name) setCardName((v) => v || profile.full_name);
+  }, [profile?.whatsapp, profile?.full_name]);
+
   const planDuration =
     planType === 'monthly' ? 30 :
     planType === 'six_month' || planType === 'premium_6mo' ? 180 :
@@ -101,10 +110,10 @@ export default function PaymentModal({ open, amount, planType, propertyId, durat
 
     // Validate based on method type
     if (selectedMethod.type === 'mobile_money') {
-      if (!mmPhone.trim()) { setError('Enter your mobile money phone number.'); return; }
+      if (!normalizeWhatsApp(mmPhone)) { setError('Enter a valid Ugandan mobile money number, e.g. 0772 123 456.'); return; }
     } else if (selectedMethod.type === 'bank') {
       if (!bankAccount.trim()) { setError('Enter your bank account number.'); return; }
-      if (!bankPhone.trim()) { setError('Enter your registered phone number.'); return; }
+      if (!normalizeWhatsApp(bankPhone)) { setError('Enter a valid Ugandan phone number registered with your bank, e.g. 0772 123 456.'); return; }
     } else if (selectedMethod.type === 'card') {
       if (cardNumber.replace(/\s/g, '').length < 16) { setError('Enter a valid card number.'); return; }
       if (!cardName.trim()) { setError('Enter the name on the card.'); return; }
@@ -137,7 +146,7 @@ export default function PaymentModal({ open, amount, planType, propertyId, durat
           user_name: profile.full_name,
           type: isFeatured ? 'featured' : 'subscription',
           payment_method: selectedMethod.id,
-          phone: selectedMethod.type === 'mobile_money' ? mmPhone : bankPhone,
+          phone: normalizeWhatsApp(selectedMethod.type === 'mobile_money' ? mmPhone : bankPhone) || '',
           account: bankAccount,
           card_last4: cardNumber.replace(/\s/g, '').slice(-4),
         }),

@@ -25,24 +25,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [oauthError, setOauthError] = useState<string | null>(null);
 
-  // Google (and other OAuth) failures come back in the URL hash, e.g.
-  // /#error=server_error&error_description=... — capture and strip them.
+  // OAuth failures come back either in the query string (PKCE flow, e.g.
+  // /?error=access_denied&error_description=...) or in the URL hash
+  // (/#error=server_error&error_description=...) — capture and strip both.
   useEffect(() => {
-    const raw = window.location.hash.replace(/^#/, '');
-    if (!raw) return;
-    const params = new URLSearchParams(raw);
-    const err = params.get('error');
-    const description = params.get('error_description');
-    if (!err && !description) return;
-    setOauthError(
+    const query = new URLSearchParams(window.location.search);
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    const err = query.get('error') || hash.get('error');
+    const description = query.get('error_description') || hash.get('error_description');
+    const errorCode = query.get('error_code') || hash.get('error_code');
+    if (!err && !description && !errorCode) return;
+    const friendly =
+      errorCode === 'otp_expired' ? 'That sign-in link has expired. Please try again.' :
+      err === 'access_denied' ? 'Google sign-in was cancelled. You can try again or use email and password.' :
       description
         ? decodeURIComponent(description.replace(/\+/g, ' '))
-        : `Sign-in failed (${err}). Please try again.`
+        : `Sign-in failed (${err || errorCode}). Please try again.`;
+    setOauthError(friendly);
+    for (const key of ['error', 'error_description', 'error_code']) {
+      query.delete(key);
+      hash.delete(key);
+    }
+    const qs = query.toString();
+    const hs = hash.toString();
+    window.history.replaceState(
+      null,
+      '',
+      window.location.pathname + (qs ? `?${qs}` : '') + (hs ? `#${hs}` : '')
     );
-    params.delete('error');
-    params.delete('error_description');
-    const remaining = params.toString();
-    window.history.replaceState(null, '', window.location.pathname + window.location.search + (remaining ? `#${remaining}` : ''));
   }, []);
 
   function clearOauthError() {
@@ -105,18 +115,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signInWithGoogle() {
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: AUTH_REDIRECT_URL },
+      options: { redirectTo: AUTH_REDIRECT_URL, skipBrowserRedirect: true },
     });
 
-    if (!error) return { error: null };
+    const friendly = (msg: string) => {
+      const m = msg.toLowerCase();
+      if (m.includes('unsupported provider') || m.includes('not enabled') || m.includes('validation_failed')) {
+        return 'Google sign-in is not switched on for this site yet. Please use email and password for now.';
+      }
+      return msg;
+    };
 
-    if (error.message.toLowerCase().includes('unsupported provider')) {
-      return { error: 'Google sign-in is not enabled yet. Please use email and password for now.' };
+    if (error) return { error: friendly(error.message) };
+    if (!data?.url) return { error: 'Could not start Google sign-in. Please try again.' };
+
+    // Validate before leaving the page: a disabled or misconfigured provider
+    // answers with a JSON error, and navigating there would strand the user
+    // on a raw error page instead of showing the message in the modal.
+    try {
+      const probe = await fetch(data.url, { method: 'GET', redirect: 'manual' });
+      if (probe.type !== 'opaqueredirect' && probe.status >= 400) {
+        let msg = `Google sign-in failed (${probe.status}). Please try again.`;
+        try {
+          const body = await probe.json();
+          if (body?.msg || body?.error_description) msg = body.msg || body.error_description;
+        } catch { /* keep the default message */ }
+        return { error: friendly(msg) };
+      }
+    } catch {
+      // Probe blocked (offline/CORS) — let the browser attempt the redirect.
     }
 
-    return { error: error.message };
+    window.location.href = data.url;
+    return { error: null };
   }
 
   async function resetPassword(email: string) {
