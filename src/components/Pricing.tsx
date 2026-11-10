@@ -91,8 +91,8 @@ export default function Pricing({ settings, onRequireAuth }: PricingProps) {
                 <li><span className="check"><Check size={12} /></span> Active for {plan.durationDays} {plan.durationDays === 1 ? 'day' : 'days'}</li>
                 <li><span className="check"><Check size={12} /></span> All listing types: Houses, Apartments, Hotels, Guest Houses, Warehouses</li>
                 <li><span className="check"><Check size={12} /></span> WhatsApp contact button</li>
-                {plan.maxListings === 'unlimited' && <li><span className="check"><Check size={12} /></span> Priority search placement</li>}
-                {plan.maxListings === 'unlimited' && <li><span className="check"><Check size={12} /></span> Premium badge on listings</li>}
+                {plan.key !== 'free' && <li><span className="check"><Check size={12} /></span> Priority search placement</li>}
+                {plan.key !== 'free' && <li><span className="check"><Check size={12} /></span> Premium badge on listings</li>}
                 {plan.key === 'annual' && <li><span className="check"><Check size={12} /></span> Best value — save UGX 60,000 vs monthly</li>}
               </ul>
               <button

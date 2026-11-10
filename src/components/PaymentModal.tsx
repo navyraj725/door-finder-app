@@ -124,6 +124,8 @@ export default function PaymentModal({ open, amount, planType, propertyId, durat
     setStep('processing');
     setPollSeconds(0);
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData.session?.access_token || '';
@@ -136,6 +138,7 @@ export default function PaymentModal({ open, amount, planType, propertyId, durat
           'Authorization': `Bearer ${accessToken}`,
           'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
         },
+        signal: controller.signal,
         body: JSON.stringify({
           amount,
           plan_type: planType,
@@ -152,13 +155,19 @@ export default function PaymentModal({ open, amount, planType, propertyId, durat
         }),
       });
 
-      const result = await response.json();
+      let result: { error?: string; ref_trx?: string } | null = null;
+      try {
+        result = await response.json();
+      } catch {
+        // error page instead of JSON — treated as unavailable below
+      }
+      clearTimeout(timeoutId);
 
-      if (!response.ok) {
-        throw new Error(result.error || 'Payment processing failed');
+      if (!response.ok || !result) {
+        throw new Error(result?.error || 'The payment service is unavailable right now. Please try again in a moment.');
       }
 
-      const reference = result.ref_trx as string | undefined;
+      const reference = result.ref_trx;
 
       // Poll the user's own payment row until the webhook (or an admin)
       // confirms or declines it — never trust the initiate response alone.
@@ -190,7 +199,15 @@ export default function PaymentModal({ open, amount, planType, propertyId, durat
         setStep('pending');
       }, 180000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Payment failed.');
+      clearTimeout(timeoutId);
+      const message = err instanceof Error ? err.message : '';
+      if (err instanceof TypeError || /failed to fetch|networkerror|load failed/i.test(message)) {
+        setError('Could not reach the payment service. Check your internet connection, then send the prompt again.');
+      } else if (/abort/i.test(message)) {
+        setError('The payment service took too long to respond. Please try again.');
+      } else {
+        setError(message || 'Payment failed. Please try again.');
+      }
       setStep('details');
     }
   }

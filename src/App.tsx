@@ -93,7 +93,7 @@ function AppContent() {
     <>
       <ScrollToTop />
       {!isAdminRoute && (
-        <>
+        <div className="top-stack">
           <Header
             currentTab={location.pathname}
             onTabChange={handleTabChange}
@@ -103,9 +103,36 @@ function AppContent() {
             userName={profile?.full_name || profile?.email?.split('@')[0] || null}
             isAdmin={profile?.role === 'admin'}
           />
-          <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
-        </>
+          {!isInfoRoute && (
+            <nav className="mobile-top-nav" aria-label="Primary">
+              <button className={`mb-nav-btn mb-browse ${location.pathname === '/' || location.pathname.startsWith('/uganda') ? 'active' : ''}`} onClick={() => navigate('/')}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+                <span>Browse</span>
+              </button>
+              <button className={`mb-nav-btn mb-pricing ${location.pathname === '/pricing' ? 'active' : ''}`} onClick={() => navigate('/pricing')}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                <span>Pricing</span>
+              </button>
+              <button className={`mb-nav-btn mb-dashboard ${location.pathname === '/dashboard' ? 'active' : ''}`} onClick={() => profile ? navigate('/dashboard') : setAuthOpen(true)}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span>Dashboard</span>
+              </button>
+              {profile ? (
+                <button className="mb-nav-btn mb-auth-out" onClick={handleSignOut}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+                  <span>Sign Out</span>
+                </button>
+              ) : (
+                <button className="mb-nav-btn mb-auth-in" onClick={() => setAuthOpen(true)}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>
+                  <span>Sign In</span>
+                </button>
+              )}
+            </nav>
+          )}
+        </div>
       )}
+      {!isAdminRoute && <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />}
 
       {paySuccess && !isAdminRoute && (
         <div className="notif-banner success" style={{ maxWidth: '700px', margin: '16px auto 0' }}>
@@ -118,35 +145,6 @@ function AppContent() {
           <div className="notif-icon"></div>
           <div className="notif-text"><strong>Payment Cancelled</strong>Your payment was not completed. You can try again anytime.</div>
         </div>
-      )}
-
-      {/* Mobile bottom nav */}
-      {!isAdminRoute && !isInfoRoute && (
-        <nav className="mobile-bottom-nav">
-          <button className={`mb-nav-btn ${location.pathname === '/' || location.pathname.startsWith('/uganda') ? 'active' : ''}`} onClick={() => navigate('/')}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
-            <span>Browse</span>
-          </button>
-          <button className={`mb-nav-btn ${location.pathname === '/pricing' ? 'active' : ''}`} onClick={() => navigate('/pricing')}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
-            <span>Pricing</span>
-          </button>
-          <button className={`mb-nav-btn ${location.pathname === '/dashboard' ? 'active' : ''}`} onClick={() => profile ? navigate('/dashboard') : setAuthOpen(true)}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            <span>Dashboard</span>
-          </button>
-          {profile ? (
-            <button className="mb-nav-btn" onClick={handleSignOut}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
-              <span>Sign Out</span>
-            </button>
-          ) : (
-            <button className="mb-nav-btn" onClick={() => setAuthOpen(true)}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>
-              <span>Sign In</span>
-            </button>
-          )}
-        </nav>
       )}
 
       <Routes>

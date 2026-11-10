@@ -3,7 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
-export const AUTH_REDIRECT_URL = window.location.origin;
+// Must include the deploy base path so OAuth returns to the app, not the host root.
+export const AUTH_REDIRECT_URL = (window.location.origin + import.meta.env.BASE_URL).replace(/\/+$/, '');
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
@@ -28,7 +29,7 @@ export interface PlanConfig {
 }
 
 export const PLANS: PlanConfig[] = [
-  { key: 'free', label: 'Free', price: 0, durationDays: 30, maxListings: 1 },
+  { key: 'free', label: 'Free', price: 0, durationDays: 30, maxListings: 'unlimited' },
   { key: 'monthly', label: 'Monthly', price: 10000, durationDays: 30, maxListings: 'unlimited', popular: true },
   { key: 'six_month', label: '6-Month', price: 60000, durationDays: 180, maxListings: 'unlimited' },
   { key: 'annual', label: 'Annual', price: 120000, durationDays: 365, maxListings: 'unlimited' },

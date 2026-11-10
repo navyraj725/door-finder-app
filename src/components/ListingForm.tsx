@@ -11,8 +11,6 @@ interface ListingFormProps {
   editProperty?: Property | null;
 }
 
-const MAX_PHOTOS = 10;
-const MAX_VIDEOS = 5;
 const MAX_PHOTO_MB = 10;
 const MAX_VIDEO_MB = 100;
 
@@ -139,11 +137,9 @@ export default function ListingForm({ onDone, onClose, editProperty }: ListingFo
   async function handlePhotoSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
     if (!files || !profile) return;
-    const remaining = MAX_PHOTOS - photos.length;
-    const all = Array.from(files);
-    const toUpload = all.slice(0, remaining);
-    setNotice(all.length > toUpload.length ? `Only ${toUpload.length} more photo${toUpload.length === 1 ? '' : 's'} could be added (max ${MAX_PHOTOS}).` : '');
+    const toUpload = Array.from(files);
     if (toUpload.length === 0) return;
+    setNotice('');
 
     const invalid = toUpload.find((f) => !f.type.startsWith('image/') || f.size > MAX_PHOTO_MB * 1024 * 1024);
     if (invalid) {
@@ -177,11 +173,9 @@ export default function ListingForm({ onDone, onClose, editProperty }: ListingFo
   async function handleVideoSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
     if (!files || !profile) return;
-    const remaining = MAX_VIDEOS - videos.length;
-    const all = Array.from(files);
-    const toUpload = all.slice(0, remaining);
-    setNotice(all.length > toUpload.length ? `Only ${toUpload.length} more video${toUpload.length === 1 ? '' : 's'} could be added (max ${MAX_VIDEOS}).` : '');
+    const toUpload = Array.from(files);
     if (toUpload.length === 0) return;
+    setNotice('');
 
     const invalid = toUpload.find((f) => !f.type.startsWith('video/') || f.size > MAX_VIDEO_MB * 1024 * 1024);
     if (invalid) {
@@ -314,7 +308,7 @@ export default function ListingForm({ onDone, onClose, editProperty }: ListingFo
     } catch (err) {
       const message = err instanceof Error ? err.message : '';
       if (!isEditing && /row-level security/i.test(message)) {
-        setError('Your free plan allows 1 active listing. Upgrade your plan to publish more listings.');
+        setError('Could not publish this listing. Please make sure you are signed in and try again.');
       } else {
         setError(message || (isEditing ? 'Failed to update listing.' : 'Failed to create listing.'));
       }
@@ -778,7 +772,7 @@ export default function ListingForm({ onDone, onClose, editProperty }: ListingFo
               {/* Photo upload */}
               <div className="form-group">
                 <label>
-                   Photos ({photos.length}/{MAX_PHOTOS})
+                   Photos ({photos.length})
                 </label>
                 <div className="upload-area">
                   {photos.map((p, idx) => (
@@ -787,15 +781,13 @@ export default function ListingForm({ onDone, onClose, editProperty }: ListingFo
                       <button type="button" className="upload-remove" onClick={() => removePhoto(idx)}></button>
                     </div>
                   ))}
-                  {photos.length < MAX_PHOTOS && (
-                    <div
-                      className="upload-add"
-                      onClick={() => photoInputRef.current?.click()}
-                    >
-                      <span style={{ fontSize: '28px' }}>+</span>
-                      <span style={{ fontSize: '11px' }}>Add Photo</span>
-                    </div>
-                  )}
+                  <div
+                    className="upload-add"
+                    onClick={() => photoInputRef.current?.click()}
+                  >
+                    <span style={{ fontSize: '28px' }}>+</span>
+                    <span style={{ fontSize: '11px' }}>Add Photo</span>
+                  </div>
                 </div>
                 <input
                   ref={photoInputRef}
@@ -806,14 +798,14 @@ export default function ListingForm({ onDone, onClose, editProperty }: ListingFo
                   onChange={handlePhotoSelect}
                 />
                 <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                  Up to {MAX_PHOTOS} images — JPG, PNG, WebP
+                  Unlimited images — JPG, PNG, WebP (max {MAX_PHOTO_MB}MB each)
                 </div>
               </div>
 
               {/* Video upload */}
               <div className="form-group">
                 <label>
-                   Videos ({videos.length}/{MAX_VIDEOS})
+                   Videos ({videos.length})
                 </label>
                 <div className="upload-area">
                   {videos.map((v, idx) => (
@@ -823,15 +815,13 @@ export default function ListingForm({ onDone, onClose, editProperty }: ListingFo
                       <span className="video-badge">VIDEO</span>
                     </div>
                   ))}
-                  {videos.length < MAX_VIDEOS && (
-                    <div
-                      className="upload-add"
-                      onClick={() => videoInputRef.current?.click()}
-                    >
-                      <span style={{ fontSize: '28px' }}>+</span>
-                      <span style={{ fontSize: '11px' }}>Add Video</span>
-                    </div>
-                  )}
+                  <div
+                    className="upload-add"
+                    onClick={() => videoInputRef.current?.click()}
+                  >
+                    <span style={{ fontSize: '28px' }}>+</span>
+                    <span style={{ fontSize: '11px' }}>Add Video</span>
+                  </div>
                 </div>
                 <input
                   ref={videoInputRef}
@@ -842,7 +832,7 @@ export default function ListingForm({ onDone, onClose, editProperty }: ListingFo
                   onChange={handleVideoSelect}
                 />
                 <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                  Up to {MAX_VIDEOS} videos — MP4, WebM, MOV (max 100MB each)
+                  Unlimited videos — MP4, WebM, MOV (max {MAX_VIDEO_MB}MB each)
                 </div>
               </div>
 

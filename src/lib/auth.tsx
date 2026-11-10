@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import type { Session } from '@supabase/supabase-js';
+import type { Session, User } from '@supabase/supabase-js';
 import { AUTH_REDIRECT_URL, supabase } from '@/lib/supabase';
 import type { Profile, ProfileRole } from '@/lib/supabase';
 
@@ -59,24 +59,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setOauthError(null);
   }
 
-  async function loadProfile(uid: string) {
+  async function loadProfile(user: User) {
+    const meta = user.user_metadata ?? {};
+    const fallback: Profile = {
+      id: user.id,
+      email: user.email ?? '',
+      full_name: (meta.full_name as string) || (meta.name as string) || (user.email ? user.email.split('@')[0] : 'Member'),
+      role: ['tenant', 'landlord', 'admin', 'client'].includes(meta.role as string) ? (meta.role as ProfileRole) : 'tenant',
+      whatsapp: (meta.whatsapp as string) || '',
+      avatar_url: (meta.avatar_url as string) || (meta.picture as string) || '',
+      created_at: user.created_at,
+    };
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', uid)
+      .eq('id', user.id)
       .maybeSingle();
-    if (error) {
-      console.error('Profile load error:', error.message);
+    if (!error && data) {
+      setProfile({ ...fallback, ...(data as Profile) });
       return;
     }
-    setProfile(data as Profile | null);
+    // A valid session must keep the user signed in even when no profile row
+    // exists yet — otherwise every reload asks them to register again.
+    setProfile(fallback);
   }
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       if (data.session?.user) {
-        loadProfile(data.session.user.id).finally(() => setLoading(false));
+        loadProfile(data.session.user).finally(() => setLoading(false));
       } else {
         setLoading(false);
       }
@@ -87,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (newSession?.user) {
         // Defer the query: awaiting Supabase calls inside this callback can deadlock
         // with the auth lock while the session is being committed.
-        setTimeout(() => { void loadProfile(newSession.user.id); }, 0);
+        setTimeout(() => { void loadProfile(newSession.user); }, 0);
       } else {
         setProfile(null);
       }
@@ -161,7 +173,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function refreshProfile() {
     const { data } = await supabase.auth.getSession();
-    if (data.session?.user) await loadProfile(data.session.user.id);
+    if (data.session?.user) await loadProfile(data.session.user);
   }
 
   async function signOut() {

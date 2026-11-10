@@ -1,0 +1,21 @@
+{
+  "id": "./",
+  "name": "Door Finder Uganda",
+  "short_name": "Door Finder",
+  "description": "Uganda's all-in-one marketplace for houses, apartments, hotels, guest houses and real estate. Find verified listings across all districts.",
+  "lang": "en",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "background_color": "#F5F6FA",
+  "theme_color": "#1B2B4B",
+  "categories": ["business", "lifestyle", "shopping"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { supabase, REPORT_TYPES } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
+import ScamWarning from './ScamWarning';
 
 interface ReportPageProps {
   onRequireAuth: () => void;
@@ -144,9 +145,7 @@ export default function ReportPage({ onRequireAuth }: ReportPageProps) {
   return (
     <section className="section" style={{ maxWidth: '640px', margin: '0 auto' }}>
       <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-        <div className="scam-warning-image-wrap">
-          <img className="scam-warning-image" src="/image%20copy.png" alt="Scam warning" />
-        </div>
+        <ScamWarning />
         <h2 style={{ fontFamily: "'Poppins', sans-serif", fontSize: '24px', fontWeight: 800, color: 'var(--navy)', marginBottom: '8px' }}>
           Report a Scammer or Misbehaving Account
         </h2>

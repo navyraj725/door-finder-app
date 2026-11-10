@@ -190,7 +190,7 @@ export default function Dashboard({ settings, onRequireAuth, onNavigatePricing }
             <div className="sub-footer-info">
               {isPaid
                 ? <><strong>{activeListingCount} active listings</strong> • Unlimited plan</>
-                : <><strong>{activeListingCount} / 1 active listing</strong> • Free plan</>}
+                : <><strong>{activeListingCount} active listings</strong> • Free plan</>}
             </div>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               {isExpired && (
