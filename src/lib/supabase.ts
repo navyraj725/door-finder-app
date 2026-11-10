@@ -1,7 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+// Publishable client fallbacks for builds without injected env (e.g. GitHub Pages);
+// the anon key is public by design and data access is governed by RLS.
+const FALLBACK_SUPABASE_URL = 'https://nqyqpymrnnqgcazivofd.supabase.co';
+const FALLBACK_SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xeXFweW1ybm5xZ2Nheml2b2ZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM4NTQ4ODksImV4cCI6MjEwOTQzMDg4OX0.FyWQPGkEUrmLQJg_gs8uT7hKHCCLaOcV9aOxzDZPtrM';
+
+const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined) || FALLBACK_SUPABASE_URL;
+const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) || FALLBACK_SUPABASE_ANON_KEY;
 
 // Must include the deploy base path so OAuth returns to the app, not the host root.
 export const AUTH_REDIRECT_URL = (window.location.origin + import.meta.env.BASE_URL).replace(/\/+$/, '');
